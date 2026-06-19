@@ -3,7 +3,7 @@
    Cover + turnable pages. Big nav buttons, page dots, swipe.
    ============================================================ */
 
-const { useState, useEffect, useRef, useMemo, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } = React;
 
 /* ---------- SVG decorations (shared with original card) ---------- */
 
@@ -121,7 +121,7 @@ const CouplePage = () => (
         <img src={(window.__resources && window.__resources.coupleImg) || "assets/couple.jpg"} alt="Neha and Prajwal" />
       </div>
     </div>
-    <p className="body-text" style={{fontSize:'17px'}}>
+    <p className="body-text" style={{fontSize:'16px'}}>
       &ldquo;In all the world, there is no heart for me like yours.<br/>
       In all the world, there is no love for you like mine.&rdquo;
     </p>
@@ -217,6 +217,51 @@ const App = () => {
     localStorage.setItem('np-book-page', String(page));
   }, [page]);
 
+  // Hide the loading splash once React has mounted AND fonts are ready,
+  // so guests never see the Babel-compile flash or the font swap.
+  useEffect(() => {
+    const splash = document.getElementById('cover-splash');
+    if (!splash) return;
+    let settled = false;
+    const hide = () => {
+      if (settled) return;
+      settled = true;
+      splash.classList.add('hide');
+      setTimeout(() => splash.remove(), 750);
+    };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() =>
+        requestAnimationFrame(() => requestAnimationFrame(hide))
+      );
+    }
+    setTimeout(hide, 2600); // safety cap if fonts stall
+  }, []);
+
+  // Auto-fit: scale each page's content so it always sits inside the frame,
+  // no matter the screen height. Full size on roomy screens; gently scales
+  // down only when the viewport is short.
+  useLayoutEffect(() => {
+    const fit = () => {
+      document.querySelectorAll('.page-face').forEach((face) => {
+        if (face.classList.contains('cover-face')) return;
+        const content = face.querySelector('.page-content');
+        if (!content) return;
+        content.style.transform = 'none';
+        const cs = getComputedStyle(face);
+        const padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+        const avail = face.clientHeight - padV - 6;
+        const natural = content.scrollHeight;
+        const scale = natural > avail ? Math.max(0.62, avail / natural) : 1;
+        content.style.transform = scale < 1 ? `scale(${scale})` : '';
+      });
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    const t = setTimeout(fit, 320);
+    return () => { window.removeEventListener('resize', fit); clearTimeout(t); };
+  }, [page]);
+
   const next = useCallback(() => setPage(p => Math.min(LAST, p + 1)), []);
   const prev = useCallback(() => setPage(p => Math.max(0, p - 1)), []);
 
@@ -265,7 +310,7 @@ const App = () => {
               <div
                 key={p.id}
                 className={`page ${i < page ? 'flipped' : ''}`}
-                style={{ zIndex: i < page ? i + 1 : PAGES.length + 10 - i }}
+                style={{ zIndex: i < page ? 200 + i : (i === page ? 100 : 50 - i) }}
                 onClick={() => { if (i === page && !isCover) next(); }}
                 aria-hidden={i !== page}
               >
@@ -275,12 +320,13 @@ const App = () => {
                   {!isCover && <div className="corner-floral tr"><BookFloralCorner /></div>}
                   {!isCover && <div className="corner-floral bl"><BookFloralCorner /></div>}
                   {!isCover && <div className="corner-floral br"><BookFloralCorner /></div>}
-                  {renderContent(p.id)}
+                  <div className="page-content">
+                    {renderContent(p.id)}
+                  </div>
                   {!isCover && (
                     <div className="page-num">{i} · OF · {LAST}</div>
                   )}
                 </div>
-                <div className="page-face page-back"></div>
               </div>
             );
           })}

@@ -78,8 +78,8 @@
 
   .book {
     position: relative;
-    width: min(90vw, 392px);
-    aspect-ratio: 10 / 14.3;
+    width: min(90vw, 384px);
+    height: clamp(480px, calc(100svh - 172px), 662px);
     transform-style: preserve-3d;
   }
 
@@ -101,20 +101,19 @@
     position: absolute;
     inset: 0;
     transform-origin: left center;
-    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     transition:
-      transform .95s cubic-bezier(.45,.05,.3,1),
-      opacity .35s ease .12s;
+      transform .6s cubic-bezier(.33,0,.2,1),
+      opacity .5s ease;
     border-radius: 6px 14px 14px 6px;
     cursor: pointer;
+    will-change: transform, opacity;
   }
   .page.flipped {
-    transform: rotateY(-150deg);
+    transform: rotateY(-14deg) translateX(-5%) scale(.97);
     opacity: 0;
     pointer-events: none;
-    transition:
-      transform .95s cubic-bezier(.45,.05,.3,1),
-      opacity .4s ease .5s;
   }
 
   .page-face {
@@ -141,6 +140,16 @@
     background:
       radial-gradient(circle at 50% 50%, rgba(201,169,110,0.07) 0%, transparent 60%),
       linear-gradient(180deg, #faeee4 0%, #f7e9df 100%);
+  }
+
+  /* content wrapper that auto-fits inside the frame */
+  .page-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
   }
 
   /* gold double frame on every content page */
@@ -613,6 +622,43 @@
     .nav-btn { padding: 10px 16px; font-size: 14px; }
     .book-nav { gap: 10px; }
   }
+
+  /* ===== Loading splash: hides Babel-compile flash + font swap ===== */
+  #cover-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    background: radial-gradient(ellipse at 50% 38%, #fdf6f0 0%, #f7e9df 68%, #f1ddd0 100%);
+    transition: opacity .7s ease;
+  }
+  #cover-splash.hide { opacity: 0; pointer-events: none; }
+  .splash-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(201,169,110,0.22);
+    border-top-color: #c9a96e;
+    animation: splashSpin 1s linear infinite;
+  }
+  @keyframes splashSpin { to { transform: rotate(360deg); } }
+  .splash-name {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 30px;
+    color: #5b2334;
+  }
+  .splash-sub {
+    font-family: Georgia, serif;
+    font-size: 11px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: #6f5526;
+  }
 </style>
 </head>
 <body>
@@ -639,6 +685,12 @@
 
   <div class="ambient" id="ambient"></div>
   <div id="app"></div>
+
+  <div id="cover-splash">
+    <div class="splash-ring"></div>
+    <div class="splash-name">Neha &amp; Prajwal</div>
+    <div class="splash-sub">Wedding Invitation</div>
+  </div>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
