@@ -77,8 +77,12 @@ const useBookCountdown = (target) => {
 const CoverPage = ({ onOpen }) => (
   <>
     <div className="cover-frame"></div>
-    <div className="cover-eyebrow">WEDDING INVITATION</div>
+    <div className="cover-eyebrow">THE WEDDING OF</div>
+    <div className="cover-names">
+      Neha<span className="cover-amp">&amp;</span>Prajwal
+    </div>
     <div className="cover-rule"></div>
+    <div className="cover-date">27 · JUNE · 2026</div>
     <button
       className="wax-seal cover-seal"
       onClick={(e) => { e.stopPropagation(); onOpen(); }}
