@@ -224,6 +224,20 @@ const App = () => {
 
   // (Intentionally not persisting page position — every visit begins at the cover.)
 
+  // Track which page is actively turning so it can be raised above the
+  // others — without this, the page mid-flip can show through/flicker
+  // against whichever page is z-ordered on top of it, especially on
+  // back-navigation where the turning page is the lower index.
+  const prevPage = useRef(0);
+  const [flipping, setFlipping] = useState(-1);
+  useEffect(() => {
+    const idx = page > prevPage.current ? prevPage.current : page;
+    setFlipping(idx);
+    const t = setTimeout(() => setFlipping(-1), 1000);
+    prevPage.current = page;
+    return () => clearTimeout(t);
+  }, [page]);
+
   // Hide the loading splash once React has mounted AND fonts are ready,
   // so guests never see the Babel-compile flash or the font swap.
   useEffect(() => {
@@ -331,12 +345,11 @@ const App = () => {
           <div className="book-base"></div>
           {PAGES.map((p, i) => {
             const isCover = p.id === 'cover';
-            const near = Math.abs(i - page) <= 1;
             return (
               <div
                 key={p.id}
-                className={`page ${i < page ? 'flipped' : ''} ${near ? 'near' : 'dormant'}`}
-                style={{ zIndex: i < page ? 200 + i : (i === page ? 100 : 50 - i) }}
+                className={`page ${i < page ? 'flipped' : ''}`}
+                style={{ zIndex: i === flipping ? 500 : (i < page ? 200 + i : (i === page ? 100 : 50 - i)) }}
                 onClick={() => { if (i === page && !isCover) next(); }}
                 aria-hidden={i !== page}
               >
