@@ -5,6 +5,12 @@
 
 const { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } = React;
 
+/* =============================================================
+   IMAGES — to change a photo, just replace the file in /assets
+   (keep the same filename) and it updates everywhere:
+     • assets/couple.jpg → "The Couple" page (2nd page)
+   ============================================================= */
+
 /* ---------- SVG decorations (shared with original card) ---------- */
 
 const BookFloralCorner = ({ color = '#c9a96e' }) => (
@@ -212,14 +218,10 @@ const ArrowRight = () => (
 );
 
 const App = () => {
-  const [page, setPage] = useState(() => {
-    const saved = parseInt(localStorage.getItem('np-book-page') || '0', 10);
-    return Number.isFinite(saved) && saved >= 0 && saved <= LAST ? saved : 0;
-  });
+  // Always start at the cover each time the link is opened.
+  const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    localStorage.setItem('np-book-page', String(page));
-  }, [page]);
+  // (Intentionally not persisting page position — every visit begins at the cover.)
 
   // Hide the loading splash once React has mounted AND fonts are ready,
   // so guests never see the Babel-compile flash or the font swap.
@@ -310,10 +312,11 @@ const App = () => {
           {PAGES.map((p, i) => {
             const flipped = i < page || (p.id === 'cover' && page > 0);
             const isCover = p.id === 'cover';
+            const near = Math.abs(i - page) <= 1;
             return (
               <div
                 key={p.id}
-                className={`page ${i < page ? 'flipped' : ''}`}
+                className={`page ${i < page ? 'flipped' : ''} ${near ? 'near' : 'dormant'}`}
                 style={{ zIndex: i < page ? 200 + i : (i === page ? 100 : 50 - i) }}
                 onClick={() => { if (i === page && !isCover) next(); }}
                 aria-hidden={i !== page}
@@ -343,14 +346,17 @@ const App = () => {
           <ArrowLeft /> BACK
         </button>
         <div className="nav-dots">
-          {PAGES.map((p, i) => (
-            <button
-              key={p.id}
-              className={`nav-dot ${i === page ? 'active' : ''}`}
-              onClick={() => setPage(i)}
-              aria-label={`Go to ${p.label}`}
-            ></button>
-          ))}
+          {PAGES.slice(1).map((p) => {
+            const idx = PAGES.indexOf(p);
+            return (
+              <button
+                key={p.id}
+                className={`nav-dot ${idx === page ? 'active' : ''}`}
+                onClick={() => setPage(idx)}
+                aria-label={`Go to ${p.label}`}
+              ></button>
+            );
+          })}
         </div>
         <button className={`nav-btn ${page === 0 ? 'primary' : ''}`} onClick={next} disabled={page === LAST} aria-label="Next page">
           {page === 0 ? 'OPEN' : 'NEXT'} <ArrowRight />

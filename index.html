@@ -74,6 +74,7 @@
     justify-content: center;
     padding: 20px 14px 132px;
     perspective: 1800px;
+    -webkit-perspective: 1800px;
   }
 
   .book {
@@ -81,6 +82,7 @@
     width: min(90vw, 384px);
     height: clamp(480px, calc(100svh - 172px), 662px);
     transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
   }
 
   /* Paper-stack edge illusion under all pages */
@@ -94,6 +96,9 @@
       0 30px 60px -20px rgba(91,35,52,0.4),
       0 12px 28px -12px rgba(91,35,52,0.3);
     transform: translateZ(-2px) translateX(3px) translateY(2px);
+    -webkit-transform: translateZ(-2px) translateX(3px) translateY(2px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* ============= PAGE ============= */
@@ -103,13 +108,20 @@
     transform-origin: left center;
     transform-style: preserve-3d;
     -webkit-transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     transition: transform .95s cubic-bezier(.62,.04,.3,1);
     border-radius: 6px 14px 14px 6px;
     cursor: pointer;
-    will-change: transform;
+  }
+  /* pages far from the current one are pulled out of the GPU compositor
+     so iOS isn't z-fighting many coplanar 3D layers (a flicker cause) */
+  .page.dormant {
+    visibility: hidden;
   }
   .page.flipped {
     transform: rotateY(-180deg);
+    -webkit-transform: rotateY(-180deg);
     pointer-events: none;
   }
 
@@ -119,7 +131,6 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     border-radius: inherit;
-    overflow: hidden;
     background: linear-gradient(180deg, #fdf6f0 0%, #faeee4 100%);
     box-shadow:
       inset 0 0 0 1px rgba(201,169,110,0.25),
@@ -134,6 +145,7 @@
   /* back of a turned page (visible mid-turn) */
   .page-back {
     transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
     background: radial-gradient(circle at 50% 42%, #fdf6f0 0%, #f7e9df 68%, #f1ddd0 100%);
   }
   .page-back::before {
@@ -329,6 +341,7 @@
     cursor: pointer;
   }
   .cover-seal { margin: 14px auto 6px; }
+
   .wax-seal::before {
     content: '';
     position: absolute;
@@ -462,16 +475,17 @@
     display: block;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    filter: saturate(1.1) contrast(1.02);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
   .portrait-arch::after {
     content: '';
     position: absolute;
     inset: 0;
+    /* plain translucent tint — NO mix-blend-mode (blend modes on an image
+       inside a rotating 3D card flicker badly on iOS Safari) */
     background:
-      radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.15) 0%, transparent 55%),
-      linear-gradient(180deg, rgba(232,180,184,0.18) 0%, rgba(201,125,142,0.28) 100%);
-    mix-blend-mode: multiply;
+      linear-gradient(180deg, rgba(232,180,184,0.10) 0%, rgba(201,125,142,0.20) 100%);
     pointer-events: none;
   }
 
@@ -580,9 +594,9 @@
     justify-content: center;
     gap: 16px;
     padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, rgba(253,246,240,0) 0%, rgba(253,246,240,0.92) 38%, rgba(253,246,240,0.98) 100%);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    /* opaque gradient — NO backdrop-filter (re-blurring the moving book
+       behind it every frame is a major iOS Safari flicker source) */
+    background: linear-gradient(180deg, rgba(253,246,240,0) 0%, rgba(253,246,240,0.96) 32%, #fdf6f0 70%);
   }
   .nav-btn {
     display: inline-flex;
